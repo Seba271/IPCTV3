@@ -9,9 +9,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.content.Context;
-import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -40,7 +38,6 @@ import androidx.leanback.widget.VerticalGridView;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Gravity;
-import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -59,72 +56,79 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.TreeMap;
 
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
-
 public class MainFragment extends BrowseSupportFragment {
+    // TAG para logs
     private static final String TAG = "MainFragment";
 
+    // Constantes para la actualización del fondo, tamaño de items y máximo columnas en grid
     private static final int BACKGROUND_UPDATE_DELAY = 300;
     private static final int GRID_ITEM_WIDTH = 200;
     private static final int GRID_ITEM_HEIGHT = 200;
     private static final int MAX_NUM_COLS =5;
 
+    // Handler para ejecutar tareas en el hilo UI
     private final Handler mHandler = new Handler(Looper.myLooper());
-    private Drawable mDefaultBackground;
-    private DisplayMetrics mMetrics;
-    private Timer mBackgroundTimer;
-    private String mBackgroundUri;
-    private BackgroundManager mBackgroundManager;
+    private Drawable mDefaultBackground; // Drawable por defecto para fondo
+    private DisplayMetrics mMetrics;     // Para obtener tamaño pantalla
+    private Timer mBackgroundTimer;      // Temporizador para actualizar fondo
+    private String mBackgroundUri;       // Uri de la imagen actual de fondo
+    private BackgroundManager mBackgroundManager;  // Manager para el fondo
 
-    private AssetManager assetManager;
+    private AssetManager assetManager;   // Para manejar recursos dentro de assets
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         Log.i(TAG, "onCreate");
 
+        // Obtener el AssetManager para acceder a archivos dentro de assets
         assetManager = getContext().getAssets();
 
         super.onActivityCreated(savedInstanceState);
 
+        // Preparar manager de fondo
         prepareBackgroundManager();
 
+        // Configurar elementos UI
         setupUIElements();
 
+        // Cargar las filas con los datos
         loadRows();
 
+        // Configurar listeners para eventos de UI
         setupEventListeners();
 
-
-        // Ensure rows are loaded and then select the first item
-        //  mHandler.postDelayed(() -> selectFirstItem(), 500); // delay to ensure rows are loaded
-
+        // Opcional: seleccionar primer item después de cargar filas (comentado)
+        // mHandler.postDelayed(() -> selectFirstItem(), 500);
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
+        // Cancelar el timer del fondo para evitar leaks
         if (null != mBackgroundTimer) {
             Log.d(TAG, "onDestroy: " + mBackgroundTimer.toString());
             mBackgroundTimer.cancel();
         }
     }
 
-
-
+    /**
+     * Método que carga las filas en el BrowseSupportFragment.
+     * Agrupa películas por su grupo, las ordena alfabéticamente y las divide en filas con máximo 5 columnas.
+     */
     private void loadRows() {
-
-
+        // Obtener lista completa de películas desde assets
         List<Movie> list = MovieList.setupMovies(assetManager);
         ArrayObjectAdapter rowsAdapter = new ArrayObjectAdapter(new ListRowPresenter());
         CardPresenter cardPresenter = new CardPresenter();
 
-        Map<String, List<Movie>> groupedMovies = new TreeMap<>();  // Using TreeMap for alphabetical sorting
+        // Usar TreeMap para ordenar grupos alfabéticamente
+        Map<String, List<Movie>> groupedMovies = new TreeMap<>();
 
+        // Agrupar películas por su grupo
         for (Movie movie : list) {
             String group = movie.getGroup();
             if (group == null || group.isEmpty()) {
-                group = "zzz_other";  // Prefix with 'zzz_' to ensure it's last alphabetically
+                group = "zzz_other";  // Grupo "otros" para que quede al final
             }
             if (!groupedMovies.containsKey(group)) {
                 groupedMovies.put(group, new ArrayList<>());
@@ -132,42 +136,45 @@ public class MainFragment extends BrowseSupportFragment {
             groupedMovies.get(group).add(movie);
         }
 
-// Move "other" group to a separate variable and remove it from the TreeMap
+        // Extraer el grupo "otros" para manejarlo separado
         List<Movie> otherMovies = groupedMovies.remove("zzz_other");
 
+        // Iterar cada grupo para crear filas de hasta MAX_NUM_COLS columnas
         for (Map.Entry<String, List<Movie>> entry : groupedMovies.entrySet()) {
             String group = entry.getKey();
             List<Movie> moviesInGroup = entry.getValue();
 
-            // Calculate the number of rows needed for this group
+            // Número de filas para este grupo
             int numRows = (moviesInGroup.size() + MAX_NUM_COLS - 1) / MAX_NUM_COLS;
 
+            // Crear cada fila
             for (int i = 0; i < numRows; i++) {
                 ArrayObjectAdapter listRowAdapter = new ArrayObjectAdapter(cardPresenter);
 
-                // Calculate start and end indices for this row
+                // Calcular índices inicio y fin de películas para esta fila
                 int startIndex = i * MAX_NUM_COLS;
                 int endIndex = Math.min((i + 1) * MAX_NUM_COLS, moviesInGroup.size());
 
-                // Add movies to this row
+                // Añadir las películas a la fila
                 listRowAdapter.addAll(0, moviesInGroup.subList(startIndex, endIndex));
 
-                // Create header for this row
+                // Crear texto para el encabezado de la fila
                 String headerText = group;
                 if (numRows > 1) {
-                    int firstMovieIndex = startIndex + 1;  // Adding 1 to convert from 0-based to 1-based indexing
+                    int firstMovieIndex = startIndex + 1;  // índice 1-based
                     int lastMovieIndex = endIndex;
                     headerText += " (" + firstMovieIndex + "-" + lastMovieIndex + ")";
                 } else {
                     headerText += " (" + moviesInGroup.size() + ")";
                 }
 
+                // Crear HeaderItem y agregar la fila al adapter principal
                 HeaderItem header = new HeaderItem(0, headerText);
                 rowsAdapter.add(new ListRow(header, listRowAdapter));
             }
         }
 
-// Now handle the "other" group if it exists
+        // Manejar el grupo "otros" igual que los demás
         if (otherMovies != null && !otherMovies.isEmpty()) {
             int numRows = (otherMovies.size() + MAX_NUM_COLS - 1) / MAX_NUM_COLS;
 
@@ -193,69 +200,72 @@ public class MainFragment extends BrowseSupportFragment {
             }
         }
 
-//        HeaderItem gridHeader = new HeaderItem(i, "PREFERENCES");
-//
-//        GridItemPresenter mGridPresenter = new GridItemPresenter();
-//        ArrayObjectAdapter gridRowAdapter = new ArrayObjectAdapter(mGridPresenter);
-//        gridRowAdapter.add(getResources().getString(R.string.grid_view));
-//        gridRowAdapter.add(getString(R.string.error_fragment));
-//        gridRowAdapter.add(getResources().getString(R.string.personal_settings));
-//        rowsAdapter.add(new ListRow(gridHeader, gridRowAdapter));
+        // Se podría agregar aquí filas extras con otras configuraciones, pero están comentadas
 
+        // Asignar el adapter con todas las filas a la vista
         setAdapter(rowsAdapter);
 
+        // Seleccionar la primera fila y el primer item si existen
         if (rowsAdapter.size() > 0) {
             ListRow firstRow = (ListRow) rowsAdapter.get(0);
             if (firstRow != null && firstRow.getAdapter() != null && firstRow.getAdapter().size() > 0) {
                 Object firstItem = firstRow.getAdapter().get(0);
                 if (firstItem != null) {
-                    setSelectedPosition(0); // Select the first row
-
+                    setSelectedPosition(0); // Seleccionar la primera fila
                 }
             }
         }
-
     }
 
+    /**
+     * Prepara el BackgroundManager para manejar el fondo de pantalla
+     */
     private void prepareBackgroundManager() {
-
         mBackgroundManager = BackgroundManager.getInstance(getActivity());
         mBackgroundManager.attach(getActivity().getWindow());
 
+        // Drawable por defecto para fondo si no se carga ninguno
         mDefaultBackground = ContextCompat.getDrawable(getContext(), R.drawable.default_background);
         mMetrics = new DisplayMetrics();
         getActivity().getWindowManager().getDefaultDisplay().getMetrics(mMetrics);
     }
 
+    /**
+     * Configura elementos UI como título, colores y estado de headers
+     */
     private void setupUIElements() {
-
+        // Obtener versión de la app para mostrar en título
         String appVersion = getAppVersion(requireContext());
         setTitle(getString(R.string.browse_title) + " (v" + appVersion + ")");
 
+        setHeadersState(HEADERS_HIDDEN); // Oculta headers
+        setHeadersTransitionOnBackEnabled(true); // Permite transición al presionar atrás
 
-        setHeadersState(HEADERS_HIDDEN);
-        setHeadersTransitionOnBackEnabled(true);
-
-        // set fastLane (or headers) background color
+        // Establece color de fondo y del icono de búsqueda
         setBrandColor(ContextCompat.getColor(getContext(), R.color.fastlane_background));
-        // set search icon color
         setSearchAffordanceColor(ContextCompat.getColor(getContext(), R.color.search_opaque));
-
     }
 
-
+    /**
+     * Obtiene la versión de la aplicación desde el PackageManager
+     * @param context Contexto de la app
+     * @return Versión como String, o "Unknown" si no se encuentra
+     */
     private String getAppVersion(Context context) {
         try {
             PackageInfo packageInfo = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
             return packageInfo.versionName;
         } catch (PackageManager.NameNotFoundException e) {
-            // Handle exception
+            // Si no encuentra versión, devuelve Unknown
             return "Unknown";
         }
     }
 
+    /**
+     * Configura los listeners para eventos de búsqueda y selección de ítems
+     */
     private void setupEventListeners() {
-
+        // Al hacer clic en el icono de búsqueda, abrir actividad SearchActivity
         setOnSearchClickedListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -264,115 +274,80 @@ public class MainFragment extends BrowseSupportFragment {
             }
         });
 
-
+        // Listener para cuando se clickea un item
         setOnItemViewClickedListener(new ItemViewClickedListener());
+
+        // Listener para cuando se selecciona un item (cambia el fondo)
         setOnItemViewSelectedListener(new ItemViewSelectedListener());
     }
 
+    /**
+     * Actualiza el fondo con la imagen del URI dado usando Glide
+     * @param uri URL de la imagen de fondo
+     */
     private void updateBackground(String uri) {
         int width = mMetrics.widthPixels;
         int height = mMetrics.heightPixels;
-        Glide.with(getActivity())
-                .load(uri)
-                .centerCrop()
-                .error(mDefaultBackground)
-                .into(new SimpleTarget<Drawable>(width, height) {
-                    @Override
-                    public void onResourceReady(@NonNull Drawable drawable,
-                                                @Nullable Transition<? super Drawable> transition) {
-                        mBackgroundManager.setDrawable(drawable);
-                    }
-                });
-        mBackgroundTimer.cancel();
-    }
 
-    private void startBackgroundTimer() {
-        if (null != mBackgroundTimer) {
-            mBackgroundTimer.cancel();
+        // Si el URI es diferente al actual, cargar nueva imagen
+        if (uri != null && !uri.equals(mBackgroundUri)) {
+            mBackgroundUri = uri;
+
+            Glide.with(getContext())
+                    .load(uri)
+                    .centerCrop()
+                    .error(mDefaultBackground)
+                    .into(new SimpleTarget<Drawable>(width, height) {
+                        @Override
+                        public void onResourceReady(@NonNull Drawable resource,
+                                                    @Nullable Transition<? super Drawable> transition) {
+                            mBackgroundManager.setDrawable(resource);
+                        }
+                    });
         }
-        mBackgroundTimer = new Timer();
-        mBackgroundTimer.schedule(new UpdateBackgroundTask(), BACKGROUND_UPDATE_DELAY);
     }
 
-    private List<Movie> loadAllMovies() {
-        return MovieList.setupMovies(FirevisionApplication.getAppContext().getAssets());
-    }
-
+    /**
+     * Listener para eventos de click en items
+     */
     private final class ItemViewClickedListener implements OnItemViewClickedListener {
         @Override
         public void onItemClicked(Presenter.ViewHolder itemViewHolder, Object item,
                                   RowPresenter.ViewHolder rowViewHolder, Row row) {
-
             if (item instanceof Movie) {
                 Movie movie = (Movie) item;
-                Log.d(TAG, "Item: " + item.toString());
-                Intent intent = new Intent(getActivity(), PlaybackActivity.class);
+                // Crear intent para detalle y pasar extras con info del item
+                Intent intent = new Intent(getActivity(), DetailsActivity.class);
                 intent.putExtra(DetailsActivity.MOVIE, movie);
-                getActivity().startActivity(intent);
-            } else if (item instanceof String) {
-                if (((String) item).contains(getString(R.string.error_fragment))) {
-                    Intent intent = new Intent(getActivity(), BrowseErrorActivity.class);
-                    startActivity(intent);
-                } else {
-                    Toast.makeText(getActivity(), ((String) item), Toast.LENGTH_SHORT).show();
-                }
+
+                // Crear animación de transición
+                Bundle bundle = ActivityOptionsCompat.makeSceneTransitionAnimation(
+                        getActivity(),
+                        ((ImageCardView) itemViewHolder.view).getMainImageView(),
+                        DetailsActivity.SHARED_ELEMENT_NAME).toBundle();
+
+                getActivity().startActivity(intent, bundle);
             }
         }
     }
 
+    /**
+     * Listener para eventos de selección de items, para actualizar el fondo
+     */
     private final class ItemViewSelectedListener implements OnItemViewSelectedListener {
         @Override
-        public void onItemSelected(
-                Presenter.ViewHolder itemViewHolder,
-                Object item,
-                RowPresenter.ViewHolder rowViewHolder,
-                Row row) {
+        public void onItemSelected(Presenter.ViewHolder itemViewHolder, Object item,
+                                   RowPresenter.ViewHolder rowViewHolder, Row row) {
             if (item instanceof Movie) {
-                mBackgroundUri = ((Movie) item).getBackgroundImageUrl();
-                startBackgroundTimer();
+                Movie movie = (Movie) item;
+                String bgUri = movie.getBackgroundImageUrl();
+                if (bgUri != null) {
+                    updateBackground(bgUri);
+                }
             }
         }
     }
 
-    private class UpdateBackgroundTask extends TimerTask {
-
-        @Override
-        public void run() {
-            mHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    updateBackground(mBackgroundUri);
-                }
-            });
-        }
-    }
-
-    private class GridItemPresenter extends Presenter {
-        @Override
-        public ViewHolder onCreateViewHolder(ViewGroup parent) {
-            TextView view = new TextView(parent.getContext());
-            view.setLayoutParams(new ViewGroup.LayoutParams(GRID_ITEM_WIDTH, GRID_ITEM_HEIGHT));
-            view.setFocusable(true);
-            view.setFocusableInTouchMode(true);
-            view.setBackgroundColor(
-                    ContextCompat.getColor(getContext(), R.color.default_background));
-            view.setTextColor(Color.WHITE);
-            view.setGravity(Gravity.CENTER);
-            return new ViewHolder(view);
-        }
-
-        @Override
-        public void onBindViewHolder(ViewHolder viewHolder, Object item) {
-            ((TextView) viewHolder.view).setText((String) item);
-        }
-
-        @Override
-        public void onUnbindViewHolder(ViewHolder viewHolder) {
-        }
-    }
-
-
-
-
+    // Puedes agregar más métodos o clases internas según necesites, por ejemplo para adaptar los datos o gestionar otras funcionalidades.
 
 }
