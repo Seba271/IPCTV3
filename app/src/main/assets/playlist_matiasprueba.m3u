@@ -1,0 +1,52 @@
+#EXTM3U
+#EXT-X-SESSION-DATA:DATA-ID="com.xui.1_5_12r2"
+#EXTINF:-1,DW ESPAÑOL
+http://iptv.ctvc.cl:80/matiasprueba/81237978/11.ts
+#EXTINF:-1,13 SERIES
+http://iptv.ctvc.cl:80/matiasprueba/81237978/12.ts
+#EXTINF:-1,ADN RADIO
+http://iptv.ctvc.cl:80/matiasprueba/81237978/13.ts
+#EXTINF:-1,13 CABLE
+http://iptv.ctvc.cl:80/matiasprueba/81237978/14.ts
+#EXTINF:-1,+ CINE
+http://iptv.ctvc.cl:80/matiasprueba/81237978/15.ts
+#EXTINF:-1,KIDOO
+http://iptv.ctvc.cl:80/matiasprueba/81237978/19.ts
+#EXTINF:-1,FMH KIDS
+http://iptv.ctvc.cl:80/matiasprueba/81237978/21.ts
+#EXTINF:-1,DOS KIDS
+http://iptv.ctvc.cl:80/matiasprueba/81237978/23.ts
+#EXTINF:-1,DHE HD
+http://iptv.ctvc.cl:80/matiasprueba/81237978/46.ts
+#EXTINF:-1,FITMAXX
+http://iptv.ctvc.cl:80/matiasprueba/81237978/30.ts
+#EXTINF:-1,SPORTS ETX
+http://iptv.ctvc.cl:80/matiasprueba/81237978/29.ts
+#EXTINF:-1,REDBULL TV
+http://iptv.ctvc.cl:80/matiasprueba/81237978/28.ts
+#EXTINF:-1,SENPAI TV
+http://iptv.ctvc.cl:80/matiasprueba/81237978/24.ts
+#EXTINF:-1,AMC HD
+http://iptv.ctvc.cl:80/matiasprueba/81237978/47.ts
+#EXTINF:-1,PARAMOUNT CHANNEL HD
+http://iptv.ctvc.cl:80/matiasprueba/81237978/56.ts
+#EXTINF:-1,MX FAMILY
+http://iptv.ctvc.cl:80/matiasprueba/81237978/57.ts
+#EXTINF:-1,MX CLASIC
+http://iptv.ctvc.cl:80/matiasprueba/81237978/60.ts
+#EXTINF:-1,KANAL DRAMA
+http://iptv.ctvc.cl:80/matiasprueba/81237978/63.ts
+#EXTINF:-1,MUNDO SABOR
+http://iptv.ctvc.cl:80/matiasprueba/81237978/76.ts
+#EXTINF:-1,LADIES
+http://iptv.ctvc.cl:80/matiasprueba/81237978/77.ts
+#EXTINF:-1,DOS
+http://iptv.ctvc.cl:80/matiasprueba/81237978/78.ts
+#EXTINF:-1,MX SERIES
+http://iptv.ctvc.cl:80/matiasprueba/81237978/87.ts
+#EXTINF:-1,CARACOLA TV
+http://iptv.ctvc.cl:80/matiasprueba/81237978/92.ts
+#EXTINF:-1,KARAVANA URBANO
+http://iptv.ctvc.cl:80/matiasprueba/81237978/94.ts
+#EXTINF:-1,KARAVANA TV
+http://iptv.ctvc.cl:80/matiasprueba/81237978/95.ts
